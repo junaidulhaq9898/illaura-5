@@ -2,18 +2,27 @@ import Header from '@/components/shared/Header';
 import TransformationForm from '@/components/shared/TransformationForm';
 import { transformationTypes } from '@/constants';
 import { getUserById } from '@/lib/actions/user.actions';
-import { auth } from '@clerk/nextjs/server';
+import { auth } from '@clerk/nextjs/server'; // Import auth from @clerk/nextjs/server
 import { redirect } from 'next/navigation';
 
 const AddTransformationTypePage = async ({ params: { type } }: SearchParamProps) => {
-  // Extract user ID using auth from Clerk
-  const { userId } = auth();
+  // Use await to handle the promise returned by auth()
+  const { userId } = await auth();
 
   if (!userId) {
     redirect('/sign-in');
+    return null;
   }
 
   const transformation = transformationTypes[type];
+
+  // Ensure that transformation is valid
+  if (!transformation) {
+    redirect('/404');
+    return null;
+  }
+
+  // Fetch user data based on the userId
   const user = await getUserById(userId);
 
   return (

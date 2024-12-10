@@ -1,102 +1,113 @@
-import { auth } from "@clerk/nextjs";
+"use client"; // Mark as client-side component
+
 import Image from "next/image";
-import Link from "next/link";
+import { RedirectToSignIn, useUser } from "@clerk/nextjs"; // Import Clerk components
 
-import Header from "@/components/shared/Header";
-import TransformedImage from "@/components/shared/TransformedImage";
-import { Button } from "@/components/ui/button";
-import { getImageById } from "@/lib/actions/image.actions";
-import { getImageSize } from "@/lib/utils";
-import { DeleteConfirmation } from "@/components/shared/DeleteConfirmation";
-
-const ImageDetails = async ({ params: { id } }: SearchParamProps) => {
-  const { userId } = auth();
-
-  const image = await getImageById(id);
+export default function Home() {
+  const { isSignedIn, user } = useUser(); // Use Clerk's `useUser` hook
 
   return (
-    <>
-      <Header title={image.title} />
+    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
+      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
+        <Image
+          className="dark:invert"
+          src="/next.svg"
+          alt="Next.js logo"
+          width={180}
+          height={38}
+          priority
+        />
+        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
+          <li className="mb-2">
+            Get started by editing{" "}
+            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
+              app/page.tsx
+            </code>
+            .
+          </li>
+          <li>Save and see your changes instantly.</li>
+        </ol>
 
-      <section className="mt-5 flex flex-wrap gap-4">
-        <div className="p-14-medium md:p-16-medium flex gap-2">
-          <p className="text-dark-600">Transformation:</p>
-          <p className=" capitalize text-purple-400">
-            {image.transformationType}
-          </p>
-        </div>
-
-        {image.prompt && (
-          <>
-            <p className="hidden text-dark-400/50 md:block">&#x25CF;</p>
-            <div className="p-14-medium md:p-16-medium flex gap-2 ">
-              <p className="text-dark-600">Prompt:</p>
-              <p className=" capitalize text-purple-400">{image.prompt}</p>
-            </div>
-          </>
+        {/* Conditional Rendering */}
+        {isSignedIn ? (
+          <p>Welcome, {user?.firstName}!</p>
+        ) : (
+          <RedirectToSignIn /> // Redirect user to sign-in page
         )}
 
-        {image.color && (
-          <>
-            <p className="hidden text-dark-400/50 md:block">&#x25CF;</p>
-            <div className="p-14-medium md:p-16-medium flex gap-2">
-              <p className="text-dark-600">Color:</p>
-              <p className=" capitalize text-purple-400">{image.color}</p>
-            </div>
-          </>
-        )}
-
-        {image.aspectRatio && (
-          <>
-            <p className="hidden text-dark-400/50 md:block">&#x25CF;</p>
-            <div className="p-14-medium md:p-16-medium flex gap-2">
-              <p className="text-dark-600">Aspect Ratio:</p>
-              <p className=" capitalize text-purple-400">{image.aspectRatio}</p>
-            </div>
-          </>
-        )}
-      </section>
-
-      <section className="mt-10 border-t border-dark-400/15">
-        <div className="transformation-grid">
-          {/* MEDIA UPLOADER */}
-          <div className="flex flex-col gap-4">
-            <h3 className="h3-bold text-dark-600">Original</h3>
-
+        <div className="flex gap-4 items-center flex-col sm:flex-row">
+          <a
+            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
+            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             <Image
-              width={getImageSize(image.transformationType, image, "width")}
-              height={getImageSize(image.transformationType, image, "height")}
-              src={image.secureURL}
-              alt="image"
-              className="transformation-original_image"
+              className="dark:invert"
+              src="/vercel.svg"
+              alt="Vercel logomark"
+              width={20}
+              height={20}
             />
-          </div>
-
-          {/* TRANSFORMED IMAGE */}
-          <TransformedImage
-            image={image}
-            type={image.transformationType}
-            title={image.title}
-            isTransforming={false}
-            transformationConfig={image.config}
-            hasDownload={true}
-          />
+            Deploy now
+          </a>
+          <a
+            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
+            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Read our docs
+          </a>
         </div>
-
-        {userId === image.author.clerkId && (
-          <div className="mt-4 space-y-4">
-            <Button asChild type="button" className="submit-button capitalize">
-              <Link href={`/transformations/${image._id}/update`}>
-                Update Image
-              </Link>
-            </Button>
-
-            <DeleteConfirmation imageId={image._id} />
-          </div>
-        )}
-      </section>
-    </>
+      </main>
+      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
+        <a
+          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
+          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Image
+            aria-hidden
+            src="/file.svg"
+            alt="File icon"
+            width={16}
+            height={16}
+          />
+          Learn
+        </a>
+        <a
+          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
+          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Image
+            aria-hidden
+            src="/window.svg"
+            alt="Window icon"
+            width={16}
+            height={16}
+          />
+          Examples
+        </a>
+        <a
+          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
+          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Image
+            aria-hidden
+            src="/globe.svg"
+            alt="Globe icon"
+            width={16}
+            height={16}
+          />
+          Go to nextjs.org →
+        </a>
+      </footer>
+    </div>
   );
-};
-
-export default ImageDetails;
+}
