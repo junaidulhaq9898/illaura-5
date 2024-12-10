@@ -1,4 +1,4 @@
-import { SignedIn, auth } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server"; // Server-specific auth import
 import Image from "next/image";
 import { redirect } from "next/navigation";
 
@@ -9,10 +9,13 @@ import { getUserById } from "@/lib/actions/user.actions";
 import Checkout from "@/components/shared/Checkout";
 
 const Credits = async () => {
-  const { userId } = auth();
+  // Use `await` since `auth` is asynchronous
+  const { userId } = await auth();
 
+  // Redirect if user is not signed in
   if (!userId) redirect("/sign-in");
 
+  // Fetch user details from the database or API
   const user = await getUserById(userId);
 
   return (
@@ -60,14 +63,12 @@ const Credits = async () => {
                   Free Consumable
                 </Button>
               ) : (
-                <SignedIn>
-                  <Checkout
-                    plan={plan.name}
-                    amount={plan.price}
-                    credits={plan.credits}
-                    buyerId={user._id}
-                  />
-                </SignedIn>
+                <Checkout
+                  plan={plan.name}
+                  amount={plan.price}
+                  credits={plan.credits}
+                  buyerId={user._id}
+                />
               )}
             </li>
           ))}

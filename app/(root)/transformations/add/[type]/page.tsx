@@ -1,16 +1,19 @@
-import Header from '@/components/shared/Header'
+import Header from '@/components/shared/Header';
 import TransformationForm from '@/components/shared/TransformationForm';
-import { transformationTypes } from '@/constants'
+import { transformationTypes } from '@/constants';
 import { getUserById } from '@/lib/actions/user.actions';
-import { auth } from '@clerk/nextjs';
+import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 
 const AddTransformationTypePage = async ({ params: { type } }: SearchParamProps) => {
+  // Extract user ID using auth from Clerk
   const { userId } = auth();
+
+  if (!userId) {
+    redirect('/sign-in');
+  }
+
   const transformation = transformationTypes[type];
-
-  if(!userId) redirect('/sign-in')
-
   const user = await getUserById(userId);
 
   return (
@@ -29,7 +32,7 @@ const AddTransformationTypePage = async ({ params: { type } }: SearchParamProps)
         />
       </section>
     </>
-  )
-}
+  );
+};
 
-export default AddTransformationTypePage
+export default AddTransformationTypePage;
