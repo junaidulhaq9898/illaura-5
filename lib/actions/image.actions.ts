@@ -8,8 +8,29 @@ import Image from "../database/models/image.model";
 import { redirect } from "next/navigation";
 
 import { v2 as cloudinary } from 'cloudinary'
+import { Query } from 'mongoose';
 
-const populateUser = (query: any) => query.populate({
+// Define the interface for Cloudinary response resources
+interface CloudinaryResource {
+  public_id: string;
+  // Add other relevant fields if necessary
+}
+
+// Define the type for AddImageParams and UpdateImageParams
+interface AddImageParams {
+  image: any; // Replace with appropriate type for image
+  userId: string;
+  path: string;
+}
+
+interface UpdateImageParams {
+  image: any; // Replace with appropriate type for image
+  userId: string;
+  path: string;
+}
+
+// Populate user with their details
+const populateUser = (query: Query<any, any>) => query.populate({
   path: 'author',
   model: User,
   select: '_id firstName lastName clerkId'
@@ -29,13 +50,13 @@ export async function addImage({ image, userId, path }: AddImageParams) {
     const newImage = await Image.create({
       ...image,
       author: author._id,
-    })
+    });
 
     revalidatePath(path);
 
     return JSON.parse(JSON.stringify(newImage));
   } catch (error) {
-    handleError(error)
+    handleError(error);
   }
 }
 
@@ -54,13 +75,13 @@ export async function updateImage({ image, userId, path }: UpdateImageParams) {
       imageToUpdate._id,
       image,
       { new: true }
-    )
+    );
 
     revalidatePath(path);
 
     return JSON.parse(JSON.stringify(updatedImage));
   } catch (error) {
-    handleError(error)
+    handleError(error);
   }
 }
 
@@ -71,9 +92,9 @@ export async function deleteImage(imageId: string) {
 
     await Image.findByIdAndDelete(imageId);
   } catch (error) {
-    handleError(error)
-  } finally{
-    redirect('/')
+    handleError(error);
+  } finally {
+    redirect('/');
   }
 }
 
@@ -84,16 +105,20 @@ export async function getImageById(imageId: string) {
 
     const image = await populateUser(Image.findById(imageId));
 
-    if(!image) throw new Error("Image not found");
+    if (!image) throw new Error("Image not found");
 
     return JSON.parse(JSON.stringify(image));
   } catch (error) {
-    handleError(error)
+    handleError(error);
   }
 }
 
 // GET IMAGES
-export async function getAllImages({ limit = 9, page = 1, searchQuery = '' }: {
+export async function getAllImages({
+  limit = 9,
+  page = 1,
+  searchQuery = ''
+}: {
   limit?: number;
   page: number;
   searchQuery?: string;
@@ -106,37 +131,37 @@ export async function getAllImages({ limit = 9, page = 1, searchQuery = '' }: {
       api_key: process.env.CLOUDINARY_API_KEY,
       api_secret: process.env.CLOUDINARY_API_SECRET,
       secure: true,
-    })
+    });
 
     let expression = 'folder=illaura';
 
     if (searchQuery) {
-      expression += ` AND ${searchQuery}`
+      expression += ` AND ${searchQuery}`;
     }
 
     const { resources } = await cloudinary.search
       .expression(expression)
       .execute();
 
-    const resourceIds = resources.map((resource: any) => resource.public_id);
+    const resourceIds = resources.map((resource: CloudinaryResource) => resource.public_id);
 
     let query = {};
 
-    if(searchQuery) {
+    if (searchQuery) {
       query = {
         publicId: {
           $in: resourceIds
         }
-      }
+      };
     }
 
-    const skipAmount = (Number(page) -1) * limit;
+    const skipAmount = (Number(page) - 1) * limit;
 
     const images = await populateUser(Image.find(query))
       .sort({ updatedAt: -1 })
       .skip(skipAmount)
       .limit(limit);
-    
+
     const totalImages = await Image.find(query).countDocuments();
     const savedImages = await Image.find().countDocuments();
 
@@ -144,9 +169,9 @@ export async function getAllImages({ limit = 9, page = 1, searchQuery = '' }: {
       data: JSON.parse(JSON.stringify(images)),
       totalPage: Math.ceil(totalImages / limit),
       savedImages,
-    }
+    };
   } catch (error) {
-    handleError(error)
+    handleError(error);
   }
 }
 

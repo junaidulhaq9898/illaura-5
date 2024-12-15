@@ -88,9 +88,10 @@ const MediaUploader = ({
 
           {publicId ? (
             <div className="cursor-pointer overflow-hidden rounded-[10px]">
+              {/* Check if `image` is not null before passing it to `getImageSize` */}
               <CldImage
-                width={getImageSize(type, image, "width")}
-                height={getImageSize(type, image, "height")}
+                width={image ? getImageSize(type, image, "width") : 1000}
+                height={image ? getImageSize(type, image, "height") : 1000}
                 src={publicId}  // Use `publicId` directly, assuming it's a string
                 alt="image"
                 sizes={"(max-width: 767px) 100vw, 50vw"}
