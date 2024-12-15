@@ -2,7 +2,7 @@
 
 import { useToast } from "@/components/ui/use-toast";
 import { dataUrl, getImageSize } from "@/lib/utils";
-import { CldImage, CldUploadWidget } from "next-cloudinary";
+import { CldImage, CldUploadWidget, CloudinaryUploadWidgetResults } from "next-cloudinary";
 import { PlaceholderValue } from "next/dist/shared/lib/get-img-props";
 import Image from "next/image";
 
@@ -16,7 +16,7 @@ type UploadedImageInfo = {
 type MediaUploaderProps = {
   onValueChange: (value: string) => void;
   setImage: React.Dispatch<React.SetStateAction<UploadedImageInfo | null>>;
-  publicId: string | undefined;  // Allow `publicId` to be undefined initially
+  publicId: string | undefined;
   image: UploadedImageInfo | null;
   type: string;
 };
@@ -30,7 +30,8 @@ const MediaUploader = ({
 }: MediaUploaderProps) => {
   const { toast } = useToast();
 
-  const onUploadSuccessHandler = (result: any) => {
+  // Adjusted onUploadSuccessHandler to handle undefined info
+  const onUploadSuccessHandler = (result: CloudinaryUploadWidgetResults) => {
     const { info } = result;
 
     if (

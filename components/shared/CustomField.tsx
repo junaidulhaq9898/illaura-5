@@ -1,6 +1,5 @@
 import React from "react";
-import { Control, FieldValues, FieldPath, ControllerFieldState, ControllerRenderProps } from "react-hook-form";
-import { z } from "zod";
+import { Control, FieldValues, FieldPath, ControllerRenderProps, ControllerFieldState } from "react-hook-form";
 
 import {
   FormField,
@@ -9,8 +8,6 @@ import {
   FormMessage,
   FormLabel,
 } from "../ui/form";
-
-import { formSchema } from "./TransformationForm";
 
 type CustomFieldProps<TFieldValues extends FieldValues> = {
   control: Control<TFieldValues>;
@@ -31,10 +28,7 @@ export const CustomField = <TFieldValues extends FieldValues>({
     <FormField
       control={control}
       name={name}
-      render={({ field, fieldState }: { 
-        field: ControllerRenderProps<TFieldValues, FieldPath<TFieldValues>>; 
-        fieldState: ControllerFieldState 
-      }) => (
+      render={({ field }: { field: ControllerRenderProps<TFieldValues, FieldPath<TFieldValues>> }) => (
         <FormItem className={className}>
           {formLabel && <FormLabel>{formLabel}</FormLabel>}
           <FormControl>{render({ field })}</FormControl>

@@ -7,9 +7,15 @@ import Header from "@/components/shared/Header";
 import { getUserImages } from "@/lib/actions/image.actions";
 import { getUserById } from "@/lib/actions/user.actions";
 
-const Profile = async ({ searchParams }: { searchParams: Record<string, any> }) => {
-  const page = Number(searchParams?.page) || 1;
-  const { userId } = auth();
+interface SearchParams {
+  page?: string; // Optional, as page may not be present
+}
+
+const Profile = async ({ searchParams }: { searchParams: SearchParams }) => {
+  const page = Number(searchParams?.page) || 1; // Default to 1 if no page param
+  
+  // Await auth() to resolve the promise before destructuring
+  const { userId } = await auth();
 
   if (!userId) redirect("/sign-in");
 
