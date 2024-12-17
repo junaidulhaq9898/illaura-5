@@ -6,35 +6,37 @@ import { handleError } from "../utils";
 import User from "../database/models/user.model";
 import Image from "../database/models/image.model";
 import { redirect } from "next/navigation";
-
-import { v2 as cloudinary } from 'cloudinary'
-import { Query } from 'mongoose';
+import { v2 as cloudinary } from "cloudinary";
+import { Query } from "mongoose";
 
 // Define the interface for Cloudinary response resources
 interface CloudinaryResource {
   public_id: string;
-  // Add other relevant fields if necessary
 }
 
 // Define the type for AddImageParams and UpdateImageParams
 interface AddImageParams {
-  image: any; // Replace with appropriate type for image
+  image: Record<string, unknown>;
   userId: string;
   path: string;
 }
 
 interface UpdateImageParams {
-  image: any; // Replace with appropriate type for image
+  image: Record<string, unknown>;
   userId: string;
   path: string;
 }
 
 // Populate user with their details
-const populateUser = (query: Query<any, any>) => query.populate({
-  path: 'author',
-  model: User,
-  select: '_id firstName lastName clerkId'
-})
+const populateUser = <T>(
+  query: Query<T, any>
+): Query<T, any> => {
+  return query.populate({
+    path: "author",
+    model: User,
+    select: "_id firstName lastName clerkId",
+  });
+};
 
 // ADD IMAGE
 export async function addImage({ image, userId, path }: AddImageParams) {
@@ -67,7 +69,7 @@ export async function updateImage({ image, userId, path }: UpdateImageParams) {
 
     const imageToUpdate = await Image.findById(image._id);
 
-    if (!imageToUpdate || imageToUpdate.author.toHexString() !== userId) {
+    if (!imageToUpdate || imageToUpdate.author.toString() !== userId) {
       throw new Error("Unauthorized or image not found");
     }
 
@@ -89,12 +91,11 @@ export async function updateImage({ image, userId, path }: UpdateImageParams) {
 export async function deleteImage(imageId: string) {
   try {
     await connectToDatabase();
-
     await Image.findByIdAndDelete(imageId);
   } catch (error) {
     handleError(error);
   } finally {
-    redirect('/');
+    redirect("/");
   }
 }
 
@@ -103,7 +104,9 @@ export async function getImageById(imageId: string) {
   try {
     await connectToDatabase();
 
-    const image = await populateUser(Image.findById(imageId));
+    const image = await populateUser(
+      Image.findById(imageId)
+    ).exec();
 
     if (!image) throw new Error("Image not found");
 
@@ -117,7 +120,7 @@ export async function getImageById(imageId: string) {
 export async function getAllImages({
   limit = 9,
   page = 1,
-  searchQuery = ''
+  searchQuery = "",
 }: {
   limit?: number;
   page: number;
@@ -133,7 +136,7 @@ export async function getAllImages({
       secure: true,
     });
 
-    let expression = 'folder=illaura';
+    let expression = "folder=illaura";
 
     if (searchQuery) {
       expression += ` AND ${searchQuery}`;
@@ -143,24 +146,23 @@ export async function getAllImages({
       .expression(expression)
       .execute();
 
-    const resourceIds = resources.map((resource: CloudinaryResource) => resource.public_id);
+    const resourceIds = resources.map(
+      (resource: CloudinaryResource) => resource.public_id
+    );
 
-    let query = {};
+    const query = searchQuery
+      ? { publicId: { $in: resourceIds } }
+      : {};
 
-    if (searchQuery) {
-      query = {
-        publicId: {
-          $in: resourceIds
-        }
-      };
-    }
+    const skipAmount = (page - 1) * limit;
 
-    const skipAmount = (Number(page) - 1) * limit;
-
-    const images = await populateUser(Image.find(query))
+    const images = await populateUser(
+      Image.find(query)
+    )
       .sort({ updatedAt: -1 })
       .skip(skipAmount)
-      .limit(limit);
+      .limit(limit)
+      .exec();
 
     const totalImages = await Image.find(query).countDocuments();
     const savedImages = await Image.find().countDocuments();
@@ -188,12 +190,15 @@ export async function getUserImages({
   try {
     await connectToDatabase();
 
-    const skipAmount = (Number(page) - 1) * limit;
+    const skipAmount = (page - 1) * limit;
 
-    const images = await populateUser(Image.find({ author: userId }))
+    const images = await populateUser(
+      Image.find({ author: userId })
+    )
       .sort({ updatedAt: -1 })
       .skip(skipAmount)
-      .limit(limit);
+      .limit(limit)
+      .exec();
 
     const totalImages = await Image.find({ author: userId }).countDocuments();
 

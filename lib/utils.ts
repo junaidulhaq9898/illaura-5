@@ -6,7 +6,6 @@ import { twMerge } from "tailwind-merge";
 
 import { aspectRatioOptions } from "@/constants";
 
-// Utility function to merge class names using tailwind
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -54,12 +53,6 @@ export const dataUrl = `data:image/svg+xml;base64,${toBase64(
 // ==== End
 
 // FORM URL QUERY
-interface FormUrlQueryParams {
-  searchParams: URLSearchParams;
-  key: string;
-  value: string;
-}
-
 export const formUrlQuery = ({
   searchParams,
   key,
@@ -73,17 +66,11 @@ export const formUrlQuery = ({
 };
 
 // REMOVE KEY FROM QUERY
-interface RemoveUrlQueryParams {
-  searchParams: URLSearchParams;
-  keysToRemove: string[];
-}
-
 export function removeKeysFromQuery({
   searchParams,
   keysToRemove,
-}: RemoveUrlQueryParams): string {
-  // Convert searchParams to string before parsing
-  const currentUrl = qs.parse(searchParams.toString());
+}: RemoveUrlQueryParams) {
+  const currentUrl = qs.parse(searchParams);
 
   keysToRemove.forEach((key) => {
     delete currentUrl[key];
@@ -102,22 +89,15 @@ export const debounce = (func: (...args: any[]) => void, delay: number) => {
   let timeoutId: NodeJS.Timeout | null;
   return (...args: any[]) => {
     if (timeoutId) clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => func(...args), delay); // Refactored line using spread operator
+    timeoutId = setTimeout(() => func.apply(null, args), delay);
   };
 };
 
 // GE IMAGE SIZE
-export interface Image {
-  aspectRatio?: string;
-  width?: number;
-  height?: number;
-}
-
 export type AspectRatioKey = keyof typeof aspectRatioOptions;
-
 export const getImageSize = (
   type: string,
-  image: Image,
+  image: any,
   dimension: "width" | "height"
 ): number => {
   if (type === "fill") {
@@ -126,7 +106,7 @@ export const getImageSize = (
       1000
     );
   }
-  return image[dimension] ?? 1000; // Use nullish coalescing operator (??)
+  return image?.[dimension] || 1000;
 };
 
 // DOWNLOAD IMAGE
