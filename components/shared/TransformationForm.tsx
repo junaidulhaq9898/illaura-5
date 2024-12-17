@@ -3,24 +3,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import {
-  Form as UiForm,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { aspectRatioOptions, creditFee, defaultValues, transformationTypes } from "@/constants";
 import { CustomField } from "./CustomField";
@@ -61,13 +45,11 @@ const TransformationForm = ({ action, data = null, userId, type, creditBalance, 
       }
     : defaultValues;
 
-  // 1. Define your form.
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: initialValues,
   });
 
-  // 2. Define a submit handler.
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
 
@@ -182,7 +164,7 @@ const TransformationForm = ({ action, data = null, userId, type, creditBalance, 
   }, [image, transformationType.config, type]);
 
   return (
-    <UiForm {...form}>
+    <form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         {creditBalance < Math.abs(creditFee) && <InsufficientCreditsModal />}
         <CustomField
@@ -297,7 +279,7 @@ const TransformationForm = ({ action, data = null, userId, type, creditBalance, 
           </Button>
         </div>
       </form>
-    </UiForm>
+    </form>
   );
 };
 
