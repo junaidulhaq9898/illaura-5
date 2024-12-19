@@ -6,6 +6,7 @@ import { twMerge } from "tailwind-merge";
 
 import { aspectRatioOptions } from "@/constants";
 
+// Utility to combine class names
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -13,15 +14,12 @@ export function cn(...inputs: ClassValue[]) {
 // ERROR HANDLER
 export const handleError = (error: unknown) => {
   if (error instanceof Error) {
-    // This is a native JavaScript error (e.g., TypeError, RangeError)
     console.error(error.message);
     throw new Error(`Error: ${error.message}`);
   } else if (typeof error === "string") {
-    // This is a string error message
     console.error(error);
     throw new Error(`Error: ${error}`);
   } else {
-    // This is an unknown type of error
     console.error(error);
     throw new Error(`Unknown error: ${JSON.stringify(error)}`);
   }
@@ -50,33 +48,41 @@ const toBase64 = (str: string) =>
 export const dataUrl = `data:image/svg+xml;base64,${toBase64(
   shimmer(1000, 1000)
 )}`;
-// ==== End
 
 // FORM URL QUERY
+interface FormUrlQueryParams {
+  searchParams: URLSearchParams;
+  key: string;
+  value: string | number | null;
+}
+
 export const formUrlQuery = ({
   searchParams,
   key,
   value,
-}: FormUrlQueryParams) => {
+}: FormUrlQueryParams): string => {
   const params = { ...qs.parse(searchParams.toString()), [key]: value };
-
   return `${window.location.pathname}?${qs.stringify(params, {
     skipNulls: true,
   })}`;
 };
 
 // REMOVE KEY FROM QUERY
+interface RemoveUrlQueryParams {
+  searchParams: URLSearchParams;
+  keysToRemove: string[];
+}
+
 export function removeKeysFromQuery({
   searchParams,
   keysToRemove,
-}: RemoveUrlQueryParams) {
-  const currentUrl = qs.parse(searchParams);
+}: RemoveUrlQueryParams): string {
+  const currentUrl = qs.parse(searchParams.toString());
 
   keysToRemove.forEach((key) => {
     delete currentUrl[key];
   });
 
-  // Remove null or undefined values
   Object.keys(currentUrl).forEach(
     (key) => currentUrl[key] == null && delete currentUrl[key]
   );
@@ -85,19 +91,23 @@ export function removeKeysFromQuery({
 }
 
 // DEBOUNCE
-export const debounce = (func: (...args: any[]) => void, delay: number) => {
+export const debounce = <T extends unknown[]>(
+  func: (...args: T) => void,
+  delay: number
+): ((...args: T) => void) => {
   let timeoutId: NodeJS.Timeout | null;
-  return (...args: any[]) => {
+  return (...args: T) => {
     if (timeoutId) clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => func.apply(null, args), delay);
+    timeoutId = setTimeout(() => func(...args), delay);
   };
 };
 
-// GE IMAGE SIZE
+// GET IMAGE SIZE
 export type AspectRatioKey = keyof typeof aspectRatioOptions;
+
 export const getImageSize = (
   type: string,
-  image: any,
+  image: { aspectRatio?: AspectRatioKey; width?: number; height?: number },
   dimension: "width" | "height"
 ): number => {
   if (type === "fill") {
@@ -131,24 +141,27 @@ export const download = (url: string, filename: string) => {
 };
 
 // DEEP MERGE OBJECTS
-export const deepMergeObjects = (obj1: any, obj2: any) => {
-  if(obj2 === null || obj2 === undefined) {
-    return obj1;
-  }
+export const deepMergeObjects = <T extends Record<string, any>, U extends Record<string, any>>(
+  obj1: T,
+  obj2: U
+): T & U => {
+  const output = { ...obj2 } as T & U;
 
-  let output = { ...obj2 };
-
-  for (let key in obj1) {
+  for (const key in obj1) {
     if (obj1.hasOwnProperty(key)) {
       if (
         obj1[key] &&
         typeof obj1[key] === "object" &&
+        !Array.isArray(obj1[key]) &&
         obj2[key] &&
-        typeof obj2[key] === "object"
+        typeof obj2[key] === "object" &&
+        !Array.isArray(obj2[key])
       ) {
-        output[key] = deepMergeObjects(obj1[key], obj2[key]);
+        // Recursively merge objects
+        (output as any)[key] = deepMergeObjects(obj1[key], obj2[key]);
       } else {
-        output[key] = obj1[key];
+        // Assign the value from obj1
+        (output as any)[key] = obj1[key];
       }
     }
   }
