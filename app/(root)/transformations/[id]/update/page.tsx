@@ -1,25 +1,27 @@
-import { getAuth } from "@clerk/nextjs/server"; // Correct import for server-side authentication
-import { NextRequest } from "next/server"; // Import NextRequest to type the request object
-import { redirect } from "next/navigation";
-
 import Header from "@/components/shared/Header";
 import TransformationForm from "@/components/shared/TransformationForm";
 import { transformationTypes } from "@/constants";
 import { getUserById } from "@/lib/actions/user.actions";
 import { getImageById } from "@/lib/actions/image.actions";
+import { redirect } from "next/navigation";
 
-const Page = async ({ params: { id }, request }: { params: { id: string }; request: NextRequest }) => {
-  // Pass the NextRequest object to getAuth()
-  const { userId } = getAuth(request); // Get authentication details using getAuth() with NextRequest object
+interface PageProps {
+  params: { id: string };
+  request: Request;
+}
+
+const Page = async ({ params: { id }, request }: PageProps) => {
+  const userId = (request as any).userId; // Access userId from the request object, provided by middleware
 
   if (!userId) {
-    redirect("/sign-in"); // Redirect if user is not authenticated
+    redirect("/sign-in"); // Redirect to sign-in if user is not authenticated
+    return null;
   }
 
   const user = await getUserById(userId); // Fetch user data by userId
   const image = await getImageById(id); // Fetch image data by id
 
-  const transformation = transformationTypes[image.transformationType as TransformationTypeKey];
+  const transformation = transformationTypes[image.transformationType as keyof typeof transformationTypes];
 
   return (
     <>
