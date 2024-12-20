@@ -6,27 +6,29 @@ import { twMerge } from "tailwind-merge";
 
 import { aspectRatioOptions } from "@/constants";
 
-// Utility to combine class names
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
 // ERROR HANDLER
-export const handleError = (error: unknown): void => {
+export const handleError = (error: unknown) => {
   if (error instanceof Error) {
+    // This is a native JavaScript error (e.g., TypeError, RangeError)
     console.error(error.message);
     throw new Error(`Error: ${error.message}`);
   } else if (typeof error === "string") {
+    // This is a string error message
     console.error(error);
     throw new Error(`Error: ${error}`);
   } else {
+    // This is an unknown type of error
     console.error(error);
     throw new Error(`Unknown error: ${JSON.stringify(error)}`);
   }
 };
 
 // PLACEHOLDER LOADER - while image is transforming
-const shimmer = (w: number, h: number): string => `
+const shimmer = (w: number, h: number) => `
 <svg width="${w}" height="${h}" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   <defs>
     <linearGradient id="g">
@@ -40,7 +42,7 @@ const shimmer = (w: number, h: number): string => `
   <animate xlink:href="#r" attributeName="x" from="-${w}" to="${w}" dur="1s" repeatCount="indefinite"  />
 </svg>`;
 
-const toBase64 = (str: string): string =>
+const toBase64 = (str: string) =>
   typeof window === "undefined"
     ? Buffer.from(str).toString("base64")
     : window.btoa(str);
@@ -48,41 +50,33 @@ const toBase64 = (str: string): string =>
 export const dataUrl = `data:image/svg+xml;base64,${toBase64(
   shimmer(1000, 1000)
 )}`;
+// ==== End
 
 // FORM URL QUERY
-interface FormUrlQueryParams {
-  searchParams: URLSearchParams;
-  key: string;
-  value: string | number | null;
-}
-
 export const formUrlQuery = ({
   searchParams,
   key,
   value,
-}: FormUrlQueryParams): string => {
+}: FormUrlQueryParams) => {
   const params = { ...qs.parse(searchParams.toString()), [key]: value };
+
   return `${window.location.pathname}?${qs.stringify(params, {
     skipNulls: true,
   })}`;
 };
 
 // REMOVE KEY FROM QUERY
-interface RemoveUrlQueryParams {
-  searchParams: URLSearchParams;
-  keysToRemove: string[];
-}
-
 export function removeKeysFromQuery({
   searchParams,
   keysToRemove,
-}: RemoveUrlQueryParams): string {
-  const currentUrl = qs.parse(searchParams.toString());
+}: RemoveUrlQueryParams) {
+  const currentUrl = qs.parse(searchParams);
 
   keysToRemove.forEach((key) => {
     delete currentUrl[key];
   });
 
+  // Remove null or undefined values
   Object.keys(currentUrl).forEach(
     (key) => currentUrl[key] == null && delete currentUrl[key]
   );
@@ -91,23 +85,19 @@ export function removeKeysFromQuery({
 }
 
 // DEBOUNCE
-export const debounce = <T extends unknown[]>(
-  func: (...args: T) => void,
-  delay: number
-): ((...args: T) => void) => {
+export const debounce = (func: (...args: any[]) => void, delay: number) => {
   let timeoutId: NodeJS.Timeout | null;
-  return (...args: T) => {
+  return (...args: any[]) => {
     if (timeoutId) clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => func(...args), delay);
+    timeoutId = setTimeout(() => func.apply(null, args), delay);
   };
 };
 
-// GET IMAGE SIZE
+// GE IMAGE SIZE
 export type AspectRatioKey = keyof typeof aspectRatioOptions;
-
 export const getImageSize = (
   type: string,
-  image: { aspectRatio?: AspectRatioKey; width?: number; height?: number },
+  image: any,
   dimension: "width" | "height"
 ): number => {
   if (type === "fill") {
@@ -120,7 +110,7 @@ export const getImageSize = (
 };
 
 // DOWNLOAD IMAGE
-export const download = (url: string, filename: string): void => {
+export const download = (url: string, filename: string) => {
   if (!url) {
     throw new Error("Resource URL not provided! You need to provide one");
   }
@@ -141,27 +131,24 @@ export const download = (url: string, filename: string): void => {
 };
 
 // DEEP MERGE OBJECTS
-export const deepMergeObjects = <T extends Record<string, any>, U extends Record<string, any>>(
-  obj1: T,
-  obj2: U
-): T & U => {
-  const output = { ...obj2 } as T & U;
+export const deepMergeObjects = (obj1: any, obj2: any) => {
+  if(obj2 === null || obj2 === undefined) {
+    return obj1;
+  }
 
-  for (const key in obj1) {
+  let output = { ...obj2 };
+
+  for (let key in obj1) {
     if (obj1.hasOwnProperty(key)) {
       if (
         obj1[key] &&
         typeof obj1[key] === "object" &&
-        !Array.isArray(obj1[key]) &&
         obj2[key] &&
-        typeof obj2[key] === "object" &&
-        !Array.isArray(obj2[key])
+        typeof obj2[key] === "object"
       ) {
-        // Recursively merge objects and assert output[key] as an object to match Record<string, unknown>
-        (output as Record<string, unknown>)[key] = deepMergeObjects(obj1[key], obj2[key]);
+        output[key] = deepMergeObjects(obj1[key], obj2[key]);
       } else {
-        // Assign the value from obj1
-        (output as Record<string, unknown>)[key] = obj1[key];
+        output[key] = obj1[key];
       }
     }
   }
