@@ -7,11 +7,11 @@ import { redirect } from "next/navigation";
 
 interface PageProps {
   params: { id: string };
-  request: Request;
+  request: { userId?: string }; // Define a specific type for the request
 }
 
 const Page = async ({ params: { id }, request }: PageProps) => {
-  const userId = (request as any).userId; // Access userId from the request object, provided by middleware
+  const userId = request.userId; // Access userId from the request object
 
   if (!userId) {
     redirect("/sign-in"); // Redirect to sign-in if user is not authenticated

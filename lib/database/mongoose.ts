@@ -7,9 +7,9 @@ interface MongooseConnection {
   promise: Promise<Mongoose> | null;
 }
 
-// Use the correct type for global cache, not `any`
+// Extend the global type to include `mongoose` connection caching
 declare global {
-  var mongoose: MongooseConnection | undefined; // Use `var` here as it's part of the global declaration
+  var mongoose: MongooseConnection | undefined;
 }
 
 // Initialize the cached connection variable
@@ -31,10 +31,12 @@ export const connectToDatabase = async (): Promise<Mongoose> => {
 
   if (!cached.promise) {
     // Create a new connection promise
-    cached.promise = mongoose.connect(MONGODB_URL, {
-      dbName: "imaginify",
-      bufferCommands: false, // Prevent Mongoose from buffering commands
-    }).then((mongooseInstance) => mongooseInstance); // Resolve the Mongoose instance
+    cached.promise = mongoose
+      .connect(MONGODB_URL, {
+        dbName: "imaginify",
+        bufferCommands: false, // Prevent Mongoose from buffering commands
+      })
+      .then((mongooseInstance) => mongooseInstance); // Resolve the Mongoose instance
   }
 
   cached.conn = await cached.promise; // Wait for the connection promise to resolve

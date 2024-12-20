@@ -12,7 +12,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 // ERROR HANDLER
-export const handleError = (error: unknown) => {
+export const handleError = (error: unknown): void => {
   if (error instanceof Error) {
     console.error(error.message);
     throw new Error(`Error: ${error.message}`);
@@ -26,7 +26,7 @@ export const handleError = (error: unknown) => {
 };
 
 // PLACEHOLDER LOADER - while image is transforming
-const shimmer = (w: number, h: number) => `
+const shimmer = (w: number, h: number): string => `
 <svg width="${w}" height="${h}" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   <defs>
     <linearGradient id="g">
@@ -40,7 +40,7 @@ const shimmer = (w: number, h: number) => `
   <animate xlink:href="#r" attributeName="x" from="-${w}" to="${w}" dur="1s" repeatCount="indefinite"  />
 </svg>`;
 
-const toBase64 = (str: string) =>
+const toBase64 = (str: string): string =>
   typeof window === "undefined"
     ? Buffer.from(str).toString("base64")
     : window.btoa(str);
@@ -120,7 +120,7 @@ export const getImageSize = (
 };
 
 // DOWNLOAD IMAGE
-export const download = (url: string, filename: string) => {
+export const download = (url: string, filename: string): void => {
   if (!url) {
     throw new Error("Resource URL not provided! You need to provide one");
   }
@@ -157,11 +157,11 @@ export const deepMergeObjects = <T extends Record<string, any>, U extends Record
         typeof obj2[key] === "object" &&
         !Array.isArray(obj2[key])
       ) {
-        // Recursively merge objects
-        (output as any)[key] = deepMergeObjects(obj1[key], obj2[key]);
+        // Recursively merge objects and assert output[key] as an object to match Record<string, unknown>
+        (output as Record<string, unknown>)[key] = deepMergeObjects(obj1[key], obj2[key]);
       } else {
         // Assign the value from obj1
-        (output as any)[key] = obj1[key];
+        (output as Record<string, unknown>)[key] = obj1[key];
       }
     }
   }

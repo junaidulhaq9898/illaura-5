@@ -16,8 +16,6 @@ interface PopulatedUser {
   clerkId: string;
 }
 
-type PopulatedImage = IImage & { author: PopulatedUser };
-
 const populateUser = <T extends Document>(
   query: Query<T, T>
 ): Query<T & { author: PopulatedUser }, T> => {
@@ -88,9 +86,7 @@ export async function deleteImage(imageId: string) {
 export async function getImageById(imageId: string) {
   try {
     await connectToDatabase();
-    const image = await populateUser(
-      Image.findById(imageId)
-    ).exec();
+    const image = await populateUser(Image.findById(imageId)).exec();
     if (!image) throw new Error("Image not found");
 
     return JSON.parse(JSON.stringify(image));
