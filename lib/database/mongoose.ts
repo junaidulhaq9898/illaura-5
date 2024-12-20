@@ -9,8 +9,14 @@ interface MongooseConnection {
 
 // Extend the global type to include `mongoose` connection caching
 declare global {
-  var mongoose: MongooseConnection | undefined;
+  namespace NodeJS {
+    interface Global {
+      mongoose: MongooseConnection | undefined;
+    }
+  }
 }
+
+declare const global: NodeJS.Global;
 
 // Initialize the cached connection variable
 const cached: MongooseConnection = global.mongoose || { conn: null, promise: null };
