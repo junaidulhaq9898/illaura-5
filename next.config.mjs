@@ -5,10 +5,13 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: 'res.cloudinary.com',
-        port: ''
-      }
-    ]
-  }
+        port: '',
+      },
+    ],
+  },
+  experimental: {
+    serverActions: true, // Enable experimental serverActions feature
+  },
 };
 
 export default nextConfig;
