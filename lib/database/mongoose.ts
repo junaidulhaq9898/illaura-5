@@ -1,32 +1,36 @@
-import mongoose, { Mongoose } from 'mongoose';
+import mongoose, { Mongoose } from "mongoose";
 
 const MONGODB_URL = process.env.MONGODB_URL;
 
-interface MongooseConnection {
-  conn: Mongoose | null;
-  promise: Promise<Mongoose> | null;
+if (!MONGODB_URL) {
+  throw new Error("Missing MONGODB_URL");
 }
 
-let cached: MongooseConnection = (global as any).mongoose
+// Define a global type for caching the connection
+declare global {
+  // eslint-disable-next-line no-var
+  var mongoose: {
+    conn: Mongoose | null;
+    promise: Promise<Mongoose> | null;
+  };
+}
 
-if(!cached) {
-  cached = (global as any).mongoose = { 
-    conn: null, promise: null 
+// Initialize the global cache if it doesn't exist
+global.mongoose = global.mongoose || { conn: null, promise: null };
+
+export const connectToDatabase = async (): Promise<Mongoose> => {
+  if (global.mongoose.conn) {
+    return global.mongoose.conn;
   }
-}
 
-export const connectToDatabase = async () => {
-  if(cached.conn) return cached.conn;
+  if (!global.mongoose.promise) {
+    global.mongoose.promise = mongoose.connect(MONGODB_URL, {
+      dbName: "imaginify",
+      bufferCommands: false,
+    });
+  }
 
-  if(!MONGODB_URL) throw new Error('Missing MONGODB_URL');
+  global.mongoose.conn = await global.mongoose.promise;
 
-  cached.promise = 
-    cached.promise || 
-    mongoose.connect(MONGODB_URL, { 
-      dbName: 'imaginify', bufferCommands: false 
-    })
-
-  cached.conn = await cached.promise;
-
-  return cached.conn;
-}
+  return global.mongoose.conn;
+};
